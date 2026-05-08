@@ -1,0 +1,16 @@
+{
+  "name": "base-monorepo",
+  "private": true,
+  "scripts": {
+    "build": "turbo run build",
+    "lint": "turbo run lint",
+    "dev": "turbo run dev",
+    "format": "prettier --write \"**/*.{js,mjs,ts,tsx,md,mdx}\""
+  },
+  "devDependencies": {
+    "prettier": "^3.8.3",
+    "prettier-plugin-organize-imports": "^4.3.0",
+    "turbo": "^2.9.10"
+  },
+  "packageManager": "pnpm@10.28.0"
+}
