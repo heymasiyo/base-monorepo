@@ -4,6 +4,8 @@ import { HTTPException } from "hono/http-exception";
 import { logger } from "hono/logger";
 import { prettyJSON } from "hono/pretty-json";
 
+import routers from "@/routers";
+
 const app = new Hono();
 
 app.use(logger());
@@ -33,6 +35,8 @@ app.get("/health", (c) => {
     200,
   );
 });
+
+app.route("/", routers);
 
 app.notFound((c) => {
   return c.json(
