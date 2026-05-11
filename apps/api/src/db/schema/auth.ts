@@ -76,3 +76,52 @@ export const verification = sqliteTable("verification", {
   createdAt: integer("created_at", { mode: "timestamp" }),
   updatedAt: integer("updated_at", { mode: "timestamp" }),
 });
+
+export const role = sqliteTable("role", {
+  id: text("id").primaryKey().notNull(),
+  name: text("name").notNull(),
+  superuser: integer("superuser", { mode: "boolean" }).default(false).notNull(),
+  permission: text("permission").notNull(),
+  createdAt: integer("created_at", { mode: "timestamp" }),
+  updatedAt: integer("updated_at", { mode: "timestamp" }),
+});
+
+export const member = sqliteTable(
+  "member",
+  {
+    id: text("id").primaryKey().notNull(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    roleId: text("role_id")
+      .notNull()
+      .references(() => role.id, { onDelete: "cascade" }),
+    createdAt: integer("created_at", { mode: "timestamp" }),
+    updatedAt: integer("updated_at", { mode: "timestamp" }),
+  },
+  (table) => [
+    index("member_user_id_idx").on(table.userId),
+    index("member_role_id_idx").on(table.roleId),
+  ]
+);
+
+export const invitation = sqliteTable(
+  "invitation",
+  {
+    id: text("id").primaryKey().notNull(),
+    email: text("email").notNull(),
+    inviterId: text("inviter_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    roleId: text("role_id")
+      .notNull()
+      .references(() => role.id, { onDelete: "cascade" }),
+    status: text("status").notNull(),
+    createdAt: integer("created_at", { mode: "timestamp" }),
+    updatedAt: integer("updated_at", { mode: "timestamp" }),
+  },
+  (table) => [
+    index("invitation_inviter_id_idx").on(table.inviterId),
+    index("invitation_role_id_idx").on(table.roleId),
+  ]
+);

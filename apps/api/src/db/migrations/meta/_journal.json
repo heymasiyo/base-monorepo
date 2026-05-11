@@ -8,6 +8,13 @@
       "when": 1778465785862,
       "tag": "0000_known_skaar",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1778539975040,
+      "tag": "0001_wandering_demogoblin",
+      "breakpoints": true
     }
   ]
 }

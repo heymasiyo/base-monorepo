@@ -7,15 +7,16 @@
     "cf-typegen": "wrangler types --env-interface CloudflareBindings",
     "db:generate": "drizzle-kit generate",
     "db:migrate:dev": "echo yes | wrangler d1 migrations apply $(node scripts/get-db-name.mjs) --local",
-    "db:migrate": "drizzle-kit migrate",
-    "db:push": "drizzle-kit push",
-    "db:studio": "drizzle-kit studio"
+    "db:migrate": "drizzle-kit migrate"
   },
   "dependencies": {
-    "@libsql/client": "^0.17.3",
+    "@hono/zod-validator": "^0.8.0",
+    "bcryptjs": "^3.0.3",
     "dotenv": "^17.4.2",
     "drizzle-orm": "^0.45.2",
-    "hono": "^4.12.18"
+    "hono": "^4.12.18",
+    "uuid": "^14.0.0",
+    "zod": "^4.4.3"
   },
   "devDependencies": {
     "@types/node": "^25.6.2",
