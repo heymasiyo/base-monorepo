@@ -22,7 +22,7 @@ app.use(
       "Cross-Origin-Resource-Policy",
     ],
     maxAge: 86400,
-  }),
+  })
 );
 
 app.use(prettyJSON());
@@ -32,7 +32,7 @@ app.get("/health", (c) => {
     {
       message: "OK",
     },
-    200,
+    200
   );
 });
 
@@ -43,7 +43,7 @@ app.notFound((c) => {
     {
       message: "Not Found",
     },
-    404,
+    404
   );
 });
 
@@ -55,7 +55,7 @@ app.onError((err, c) => {
       {
         message: err.status === 401 ? "Unauthorized" : err.message,
       },
-      err.status,
+      err.status
     );
   }
 
@@ -65,7 +65,7 @@ app.onError((err, c) => {
     {
       message: "Internal Server Error",
     },
-    500,
+    500
   );
 });
 
