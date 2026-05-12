@@ -148,3 +148,28 @@ export async function createSession(db: Database, params: CreateSessionParams) {
 
   return result;
 }
+
+export async function getSessionByToken(db: Database, token: string) {
+  const [result] = await db
+    .select({
+      id: session.id,
+      userId: session.userId,
+      token: session.token,
+      expiresAt: session.expiresAt,
+      ipAddress: session.ipAddress,
+      userAgent: session.userAgent,
+    })
+    .from(session)
+    .where(eq(session.token, token));
+
+  return result;
+}
+
+export async function deleteSessionByToken(db: Database, token: string) {
+  const [result] = await db
+    .delete(session)
+    .where(eq(session.token, token))
+    .returning();
+
+  return result;
+}

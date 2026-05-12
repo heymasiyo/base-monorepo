@@ -1,4 +1,5 @@
 import type { Bindings } from "@/types/bindings";
+import type { JWTPayload } from "hono/utils/jwt/types";
 
 import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
@@ -13,6 +14,7 @@ import {
   createRole,
   createSession,
   createUser,
+  deleteSessionByToken,
   getUserCredentialsByEmail,
 } from "@/db/queries/auth";
 import {
@@ -22,6 +24,7 @@ import {
   verifyPassword,
 } from "@/lib/utils";
 import { withBasicAuth } from "@/middleware/basic-auth";
+import { withBearerAuth } from "@/middleware/bearer-auth";
 import { zValidator } from "@/middleware/zod-validator";
 import { signInEmailSchema, signUpEmailSchema } from "@/schemas/auth";
 
@@ -112,7 +115,7 @@ authRouter.post(
         nbf: timestampToken,
         iat: timestampToken,
         iss: c.env.APP_NAME,
-        sub: userCredentials.id,
+        aud: userCredentials.id,
       },
       c.env.JWT_SECRET
     );
@@ -127,7 +130,7 @@ authRouter.post(
 
     return c.json(
       {
-        message: "Login berhasil",
+        message: "Log in berhasil",
         data: {
           token,
         },
@@ -136,5 +139,19 @@ authRouter.post(
     );
   }
 );
+
+authRouter.post("/sign-out", withBearerAuth(), async (c) => {
+  const db = connectDB(c);
+  const session = c.get("jwtPayload") as JWTPayload;
+
+  await deleteSessionByToken(db, session.token as string);
+
+  return c.json(
+    {
+      message: "Log out berhasil",
+    },
+    200
+  );
+});
 
 export default authRouter;
