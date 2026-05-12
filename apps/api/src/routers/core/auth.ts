@@ -2,6 +2,7 @@ import type { Bindings } from "@/types/bindings";
 
 import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
+import { sign } from "hono/jwt";
 
 import { connectDB } from "@/db/client";
 import {
@@ -10,12 +11,19 @@ import {
   createEmailAccount,
   createMember,
   createRole,
+  createSession,
   createUser,
+  getUserCredentialsByEmail,
 } from "@/db/queries/auth";
-import { hashPassword } from "@/lib/utils";
+import {
+  getRequestInfo,
+  hashPassword,
+  isEmpty,
+  verifyPassword,
+} from "@/lib/utils";
 import { withBasicAuth } from "@/middleware/basic-auth";
 import { zValidator } from "@/middleware/zod-validator";
-import { signUpEmailSchema } from "@/schemas/auth";
+import { signInEmailSchema, signUpEmailSchema } from "@/schemas/auth";
 
 const authRouter = new Hono<{ Bindings: Bindings }>();
 
@@ -66,6 +74,63 @@ authRouter.post(
     return c.json(
       {
         message: "Pendaftaran berhasil",
+      },
+      200
+    );
+  }
+);
+
+authRouter.post(
+  "/sign-in/email",
+  withBasicAuth(),
+  zValidator("json", signInEmailSchema),
+  async (c) => {
+    const db = connectDB(c);
+    const body = c.req.valid("json");
+
+    const userCredentials = await getUserCredentialsByEmail(db, body.email);
+    if (isEmpty(userCredentials)) {
+      throw new HTTPException(400, {
+        message: "Email atau password salah",
+      });
+    }
+
+    if (!verifyPassword(body.password, userCredentials.password as string)) {
+      throw new HTTPException(400, {
+        message: "Email atau password salah",
+      });
+    }
+
+    const timestampToken = Math.floor(Date.now() / 1000);
+    const expiresAt = timestampToken + 30 * 24 * 60 * 60;
+    const expiresAtStr = new Date(expiresAt * 1000);
+
+    const { ip, userAgent } = getRequestInfo(c);
+    const token = await sign(
+      {
+        exp: expiresAt,
+        nbf: timestampToken,
+        iat: timestampToken,
+        iss: c.env.APP_NAME,
+        sub: userCredentials.id,
+      },
+      c.env.JWT_SECRET
+    );
+
+    await createSession(db, {
+      userId: userCredentials.id,
+      token,
+      expiresAt: expiresAtStr,
+      ipAddress: ip,
+      userAgent,
+    });
+
+    return c.json(
+      {
+        message: "Login berhasil",
+        data: {
+          token,
+        },
       },
       200
     );

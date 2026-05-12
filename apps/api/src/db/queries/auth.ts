@@ -1,9 +1,9 @@
 import type { Database } from "@/db/client";
 
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { v4 as uuidv4 } from "uuid";
 
-import { account, member, role, user } from "@/db/schema/auth";
+import { account, member, role, session, user } from "@/db/schema/auth";
 
 const datetime = new Date();
 
@@ -102,6 +102,45 @@ export async function createMember(db: Database, params: CreateMemberParams) {
       id: uuidv4(),
       userId: params.userId,
       roleId: params.roleId,
+      createdAt: datetime,
+      updatedAt: datetime,
+    })
+    .returning();
+
+  return result;
+}
+
+export async function getUserCredentialsByEmail(db: Database, email: string) {
+  const [result] = await db
+    .select({
+      id: user.id,
+      password: account.password,
+    })
+    .from(user)
+    .innerJoin(account, eq(account.userId, user.id))
+    .where(and(eq(user.email, email), eq(account.providerId, "email")));
+
+  return result;
+}
+
+export type CreateSessionParams = {
+  userId: string;
+  token: string;
+  expiresAt: Date;
+  ipAddress?: string;
+  userAgent?: string;
+};
+
+export async function createSession(db: Database, params: CreateSessionParams) {
+  const [result] = await db
+    .insert(session)
+    .values({
+      id: uuidv4(),
+      userId: params.userId,
+      token: params.token,
+      expiresAt: params.expiresAt,
+      ipAddress: params.ipAddress,
+      userAgent: params.userAgent,
       createdAt: datetime,
       updatedAt: datetime,
     })
