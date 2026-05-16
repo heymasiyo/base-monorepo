@@ -10,3 +10,9 @@ export const signInEmailSchema = z.object({
   email: z.email(),
   password: z.string().min(8).max(128),
 });
+
+export const changePasswordSchema = z.object({
+  currentPassword: z.string().min(8).max(128),
+  newPassword: z.string().min(8).max(128),
+  revokeOtherSessions: z.boolean().default(false).optional(),
+});

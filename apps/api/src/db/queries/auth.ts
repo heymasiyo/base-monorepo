@@ -173,3 +173,48 @@ export async function deleteSessionByToken(db: Database, token: string) {
 
   return result;
 }
+
+export async function getUserCredentialsById(db: Database, id: string) {
+  const [result] = await db
+    .select({
+      id: user.id,
+      password: account.password,
+    })
+    .from(user)
+    .innerJoin(account, eq(account.userId, user.id))
+    .where(and(eq(user.id, id), eq(account.providerId, "email")));
+
+  return result;
+}
+
+export type UpdatePasswordAccountParams = {
+  userId: string;
+  password: string;
+};
+
+export async function updatePasswordAccount(
+  db: Database,
+  params: UpdatePasswordAccountParams
+) {
+  const [result] = await db
+    .update(account)
+    .set({
+      password: params.password,
+      updatedAt: datetime,
+    })
+    .where(
+      and(eq(account.userId, params.userId), eq(account.providerId, "email"))
+    )
+    .returning();
+
+  return result;
+}
+
+export async function deleteSessionByUserId(db: Database, userId: string) {
+  const [result] = await db
+    .delete(session)
+    .where(eq(session.userId, userId))
+    .returning();
+
+  return result;
+}

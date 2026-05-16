@@ -15,7 +15,10 @@ import {
   createSession,
   createUser,
   deleteSessionByToken,
+  deleteSessionByUserId,
   getUserCredentialsByEmail,
+  getUserCredentialsById,
+  updatePasswordAccount,
 } from "@/db/queries/auth";
 import {
   getRequestInfo,
@@ -26,7 +29,11 @@ import {
 import { withBasicAuth } from "@/middleware/basic-auth";
 import { withBearerAuth } from "@/middleware/bearer-auth";
 import { zValidator } from "@/middleware/zod-validator";
-import { signInEmailSchema, signUpEmailSchema } from "@/schemas/auth";
+import {
+  changePasswordSchema,
+  signInEmailSchema,
+  signUpEmailSchema,
+} from "@/schemas/auth";
 
 const authRouter = new Hono<{ Bindings: Bindings }>();
 
@@ -153,5 +160,44 @@ authRouter.post("/sign-out", withBearerAuth(), async (c) => {
     200
   );
 });
+
+authRouter.post(
+  "/change-password",
+  withBearerAuth(),
+  zValidator("json", changePasswordSchema),
+  async (c) => {
+    const db = connectDB(c);
+    const session = c.get("jwtPayload") as JWTPayload;
+    const body = c.req.valid("json");
+
+    const userCredentials = await getUserCredentialsById(
+      db,
+      session.aud as string
+    );
+    if (
+      !verifyPassword(body.currentPassword, userCredentials.password as string)
+    ) {
+      throw new HTTPException(400, {
+        message: "Password lama salah",
+      });
+    }
+
+    await updatePasswordAccount(db, {
+      userId: session.aud as string,
+      password: hashPassword(body.newPassword),
+    });
+
+    if (body.revokeOtherSessions) {
+      await deleteSessionByUserId(db, session.aud as string);
+    }
+
+    return c.json(
+      {
+        message: "Ubah password berhasil",
+      },
+      200
+    );
+  }
+);
 
 export default authRouter;
