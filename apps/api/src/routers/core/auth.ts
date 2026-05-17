@@ -19,6 +19,7 @@ import {
   getUserCredentialsByEmail,
   getUserCredentialsById,
   updatePasswordAccount,
+  updateUser,
 } from "@/db/queries/auth";
 import {
   getRequestInfo,
@@ -33,6 +34,7 @@ import {
   changePasswordSchema,
   signInEmailSchema,
   signUpEmailSchema,
+  updateUserSchema,
 } from "@/schemas/auth";
 
 const authRouter = new Hono<{ Bindings: Bindings }>();
@@ -161,7 +163,7 @@ authRouter.post("/sign-out", withBearerAuth(), async (c) => {
   );
 });
 
-authRouter.post(
+authRouter.put(
   "/change-password",
   withBearerAuth(),
   zValidator("json", changePasswordSchema),
@@ -194,6 +196,36 @@ authRouter.post(
     return c.json(
       {
         message: "Ubah password berhasil",
+      },
+      200
+    );
+  }
+);
+
+authRouter.put(
+  "/update-user",
+  withBearerAuth(),
+  zValidator("json", updateUserSchema),
+  async (c) => {
+    const db = connectDB(c);
+    const session = c.get("jwtPayload") as JWTPayload;
+    const body = c.req.valid("json");
+
+    const oldUserData = await getUserCredentialsById(db, session.aud as string);
+
+    await updateUser(db, {
+      userId: session.aud as string,
+      email: body.email,
+      name: body.name,
+    });
+
+    if (body.email !== oldUserData.email) {
+      await deleteSessionByUserId(db, session.aud as string);
+    }
+
+    return c.json(
+      {
+        message: "Pengguna berhasil diperbarui",
       },
       200
     );

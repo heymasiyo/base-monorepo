@@ -16,3 +16,8 @@ export const changePasswordSchema = z.object({
   newPassword: z.string().min(8).max(128),
   revokeOtherSessions: z.boolean().default(false).optional(),
 });
+
+export const updateUserSchema = z.object({
+  email: z.email(),
+  name: z.string().min(1),
+});

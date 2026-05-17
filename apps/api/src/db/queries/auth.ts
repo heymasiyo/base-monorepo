@@ -178,6 +178,7 @@ export async function getUserCredentialsById(db: Database, id: string) {
   const [result] = await db
     .select({
       id: user.id,
+      email: user.email,
       password: account.password,
     })
     .from(user)
@@ -214,6 +215,26 @@ export async function deleteSessionByUserId(db: Database, userId: string) {
   const [result] = await db
     .delete(session)
     .where(eq(session.userId, userId))
+    .returning();
+
+  return result;
+}
+
+export type UpdateUserParams = {
+  userId: string;
+  email: string;
+  name: string;
+};
+
+export async function updateUser(db: Database, params: UpdateUserParams) {
+  const [result] = await db
+    .update(user)
+    .set({
+      email: params.email,
+      name: params.name,
+      updatedAt: datetime,
+    })
+    .where(eq(user.id, params.userId))
     .returning();
 
   return result;
